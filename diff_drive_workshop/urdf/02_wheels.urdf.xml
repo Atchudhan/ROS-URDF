@@ -1,0 +1,171 @@
+<?xml version="1.0"?>
+<!--
+  ╔══════════════════════════════════════════════════════════════╗
+  ║         WORKSHOP PART 2 — DRIVE WHEELS                      ║
+  ║                                                              ║
+  ║  Learning objectives:                                        ║
+  ║    • Add child links to an existing robot description        ║
+  ║    • Use <cylinder> geometry for wheels                      ║
+  ║    • Understand continuous joints (unlimited rotation)       ║
+  ║    • Set joint axis vectors correctly                        ║
+  ╚══════════════════════════════════════════════════════════════╝
+
+  NOTES:
+  - Both wheels are cylinders: radius=0.05 m, length=0.025 m
+  - They sit on either side of the chassis (±0.1125 m on Y-axis)
+  - The wheel centre height matches the axle height above the ground:
+      wheel radius = 0.05 m  →  raised 0.05 m in the chassis frame
+      (which is 0.075 m above ground, so wheel centre = 0.05 m below
+       chassis centre, i.e. z = -0.025 m relative to base_link centre)
+
+  COORDINATE CONVENTION (ROS standard — right-hand rule):
+      X → forward   Y → left   Z → up
+
+  WHY continuous joints?
+      Continuous joints have no upper / lower limits on rotation.
+      Drive wheels spin indefinitely, so "continuous" is the correct type.
+      The axis of rotation is the Y-axis (lateral axis of the robot).
+-->
+
+<robot name="diff_drive_robot">
+
+  <!-- ════════════════════════════════════════════════
+       RE-DECLARE the chassis links that these wheels
+       attach to.  In the final assembly file all links
+       and joints are merged into one <robot> element.
+       ════════════════════════════════════════════════ -->
+
+  <material name="wheel_black">
+    <color rgba="0.1 0.1 0.1 1.0"/>
+  </material>
+
+
+  <!-- ══════════════════════════════════════════
+       LEFT WHEEL LINK
+       ══════════════════════════════════════════ -->
+
+  <link name="left_wheel_link">
+
+    <visual>
+      <!--
+        Cylinders in URDF are defined along the Z-axis by default.
+        We rotate 90° around X (rpy = π/2 0 0) to align the cylinder
+        axis with the Y-axis so it rolls forward correctly.
+      -->
+      <origin xyz="0.0 0.0 0.0" rpy="1.5708 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.05" length="0.025"/>
+      </geometry>
+      <material name="wheel_black"/>
+    </visual>
+
+    <collision>
+      <origin xyz="0.0 0.0 0.0" rpy="1.5708 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.05" length="0.025"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <mass value="0.3"/>          <!-- kg -->
+      <!--
+        Inertia for a solid cylinder (axis = Y after rotation):
+          Ixx = Izz = (1/12)*m*(3r² + h²)   Iyy = (1/2)*m*r²
+          With m=0.3, r=0.05, h=0.025
+      -->
+      <inertia ixx="0.000244" ixy="0.0" ixz="0.0"
+               iyy="0.000375" iyz="0.0"
+               izz="0.000244"/>
+    </inertial>
+
+  </link>
+
+
+  <!-- ══════════════════════════════════════════
+       RIGHT WHEEL LINK
+       ══════════════════════════════════════════ -->
+
+  <link name="right_wheel_link">
+
+    <visual>
+      <origin xyz="0.0 0.0 0.0" rpy="1.5708 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.05" length="0.025"/>
+      </geometry>
+      <material name="wheel_black"/>
+    </visual>
+
+    <collision>
+      <origin xyz="0.0 0.0 0.0" rpy="1.5708 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.05" length="0.025"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <mass value="0.3"/>
+      <inertia ixx="0.000244" ixy="0.0" ixz="0.0"
+               iyy="0.000375" iyz="0.0"
+               izz="0.000244"/>
+    </inertial>
+
+  </link>
+
+
+  <!-- ══════════════════════════════════════════
+       JOINT: base_link  →  left_wheel_link
+       ══════════════════════════════════════════ -->
+
+  <joint name="left_wheel_joint" type="continuous">
+    <parent link="base_link"/>
+    <child  link="left_wheel_link"/>
+    <!--
+      Wheel centre position relative to base_link centre:
+        x =  0.0     (midpoint along length — axle is at centre)
+        y = +0.1125  (half chassis width 0.10 + half wheel thickness 0.0125)
+        z = -0.025   (wheel centre is at ground+0.05, chassis centre is
+                       at ground+0.075, so offset = −0.025)
+    -->
+    <origin xyz="0.0 0.1125 -0.025" rpy="0.0 0.0 0.0"/>
+    <axis xyz="0.0 1.0 0.0"/>    <!-- rotate around Y-axis -->
+    <dynamics damping="0.1" friction="0.1"/>
+  </joint>
+
+
+  <!-- ══════════════════════════════════════════
+       JOINT: base_link  →  right_wheel_link
+       ══════════════════════════════════════════ -->
+
+  <joint name="right_wheel_joint" type="continuous">
+    <parent link="base_link"/>
+    <child  link="right_wheel_link"/>
+    <!--
+      Mirror of left wheel — negative Y offset
+    -->
+    <origin xyz="0.0 -0.1125 -0.025" rpy="0.0 0.0 0.0"/>
+    <axis xyz="0.0 1.0 0.0"/>
+    <dynamics damping="0.1" friction="0.1"/>
+  </joint>
+
+
+  <!-- ══════════════════════════════════════════════════════
+       STUDENT TASK  ★
+       ══════════════════════════════════════════════════════
+       The joint origins above are CORRECT, but the axis
+       vector is currently set to:   <axis xyz="0.0 1.0 0.0"/>
+
+       Q1. Why is the axis Y and not X or Z?
+           (Hint: think about which direction the wheel rolls)
+
+       Q2. What would happen if you set   axis xyz="1.0 0.0 0.0"?
+           Try it in RViz — use the Joint State Publisher GUI and
+           observe how the wheel moves.
+
+       Q3. CHALLENGE: Add a visual marker (a small coloured box,
+           0.005 m thick) on the outer face of each wheel so you
+           can easily distinguish left from right in RViz.
+       ══════════════════════════════════════════════════════ -->
+
+</robot>
