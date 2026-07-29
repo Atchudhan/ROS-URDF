@@ -1,0 +1,193 @@
+<?xml version="1.0"?>
+<!--
+  ╔══════════════════════════════════════════════════════════════╗
+  ║    INSTRUCTOR REFERENCE — COMPLETE ASSEMBLY (SOLVED)        ║
+  ║    All student placeholders filled in.                      ║
+  ║    Do not distribute to students before the workshop!       ║
+  ╚══════════════════════════════════════════════════════════════╝
+-->
+
+<robot name="diff_drive_robot">
+
+  <material name="chassis_grey">
+    <color rgba="0.3 0.3 0.3 1.0"/>
+  </material>
+  <material name="wheel_black">
+    <color rgba="0.1 0.1 0.1 1.0"/>
+  </material>
+  <material name="caster_silver">
+    <color rgba="0.7 0.7 0.7 1.0"/>
+  </material>
+
+  <!-- ── LINKS ─────────────────────────────────────── -->
+
+  <link name="base_footprint"/>
+
+  <link name="base_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.30 0.20 0.05"/></geometry>
+      <material name="chassis_grey"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.30 0.20 0.05"/></geometry>
+    </collision>
+    <inertial>
+      <mass value="2.0"/>
+      <inertia ixx="0.00708" ixy="0" ixz="0" iyy="0.01542" iyz="0" izz="0.02167"/>
+    </inertial>
+  </link>
+
+  <link name="left_wheel_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+      <geometry><cylinder radius="0.05" length="0.025"/></geometry>
+      <material name="wheel_black"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+      <geometry><cylinder radius="0.05" length="0.025"/></geometry>
+    </collision>
+    <inertial>
+      <mass value="0.3"/>
+      <inertia ixx="0.000244" ixy="0" ixz="0" iyy="0.000375" iyz="0" izz="0.000244"/>
+    </inertial>
+  </link>
+
+  <link name="right_wheel_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+      <geometry><cylinder radius="0.05" length="0.025"/></geometry>
+      <material name="wheel_black"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+      <geometry><cylinder radius="0.05" length="0.025"/></geometry>
+    </collision>
+    <inertial>
+      <mass value="0.3"/>
+      <inertia ixx="0.000244" ixy="0" ixz="0" iyy="0.000375" iyz="0" izz="0.000244"/>
+    </inertial>
+  </link>
+
+  <link name="caster_bracket_link">
+    <visual>
+      <origin xyz="0 0 -0.015" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.005" length="0.03"/></geometry>
+      <material name="caster_silver"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 -0.015" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.005" length="0.03"/></geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 -0.015" rpy="0 0 0"/>
+      <mass value="0.02"/>
+      <inertia ixx="1.5e-6" ixy="0" ixz="0" iyy="1.5e-6" iyz="0" izz="2.5e-8"/>
+    </inertial>
+  </link>
+
+  <link name="caster_wheel_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><sphere radius="0.02"/></geometry>
+      <material name="caster_silver"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><sphere radius="0.02"/></geometry>
+    </collision>
+    <inertial>
+      <mass value="0.05"/>
+      <inertia ixx="8e-6" ixy="0" ixz="0" iyy="8e-6" iyz="0" izz="8e-6"/>
+    </inertial>
+  </link>
+
+  <!-- ── JOINTS ────────────────────────────────────── -->
+
+  <joint name="base_footprint_joint" type="fixed">
+    <parent link="base_footprint"/>
+    <child  link="base_link"/>
+    <origin xyz="0 0 0.075" rpy="0 0 0"/>
+  </joint>
+
+  <!-- PLACEHOLDER 1 SOLUTION -->
+  <joint name="left_wheel_joint" type="continuous">
+    <parent link="base_link"/>
+    <child  link="left_wheel_link"/>
+    <origin xyz="0.0 0.1125 -0.025" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <dynamics damping="0.1" friction="0.1"/>
+  </joint>
+
+  <!-- PLACEHOLDER 2 SOLUTION -->
+  <joint name="right_wheel_joint" type="continuous">
+    <parent link="base_link"/>
+    <child  link="right_wheel_link"/>
+    <origin xyz="0.0 -0.1125 -0.025" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <dynamics damping="0.1" friction="0.1"/>
+  </joint>
+
+  <joint name="caster_bracket_joint" type="fixed">
+    <parent link="base_link"/>
+    <child  link="caster_bracket_link"/>
+    <origin xyz="-0.125 0 -0.025" rpy="0 0 0"/>
+  </joint>
+
+  <joint name="caster_wheel_joint" type="fixed">
+    <parent link="caster_bracket_link"/>
+    <child  link="caster_wheel_link"/>
+    <origin xyz="0 0 -0.03" rpy="0 0 0"/>
+  </joint>
+
+  <!-- ── GAZEBO ─────────────────────────────────────── -->
+
+  <gazebo reference="base_link">
+    <mu1>0.6</mu1><mu2>0.6</mu2>
+    <material>Gazebo/DarkGrey</material>
+  </gazebo>
+
+  <gazebo reference="left_wheel_link">
+    <mu1>1.5</mu1><mu2>1.5</mu2>
+    <material>Gazebo/Black</material>
+  </gazebo>
+
+  <gazebo reference="right_wheel_link">
+    <mu1>1.5</mu1><mu2>1.5</mu2>
+    <material>Gazebo/Black</material>
+  </gazebo>
+
+  <!-- PLACEHOLDER 3 SOLUTION -->
+  <gazebo reference="caster_wheel_link">
+    <mu1>0.0</mu1>
+    <mu2>0.0</mu2>
+    <kp>1000000.0</kp>
+    <kd>100.0</kd>
+    <minDepth>0.001</minDepth>
+  </gazebo>
+
+  <!-- PLACEHOLDER 4 SOLUTION -->
+  <gazebo>
+    <plugin filename="ignition-gazebo-diff-drive-system"
+            name="ignition::gazebo::systems::DiffDrive">
+      <left_joint>left_wheel_joint</left_joint>
+      <right_joint>right_wheel_joint</right_joint>
+      <wheel_separation>0.225</wheel_separation>
+      <wheel_radius>0.05</wheel_radius>
+      <topic>/cmd_vel</topic>
+      <odom_topic>/odom</odom_topic>
+      <frame_id>odom</frame_id>
+      <child_frame_id>base_footprint</child_frame_id>
+      <odom_publish_frequency>50</odom_publish_frequency>
+    </plugin>
+  </gazebo>
+
+  <gazebo>
+    <plugin filename="ignition-gazebo-joint-state-publisher-system"
+            name="ignition::gazebo::systems::JointStatePublisher">
+    </plugin>
+  </gazebo>
+
+</robot>

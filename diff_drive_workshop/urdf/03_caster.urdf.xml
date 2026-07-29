@@ -1,0 +1,175 @@
+<?xml version="1.0"?>
+<!--
+  ╔══════════════════════════════════════════════════════════════╗
+  ║         WORKSHOP PART 3 — CASTER WHEEL                      ║
+  ║                                                              ║
+  ║  Learning objectives:                                        ║
+  ║    • Understand why caster wheels use fixed joints           ║
+  ║    • Model a two-part caster (bracket + sphere)              ║
+  ║    • Set zero friction in Gazebo for passive caster          ║
+  ║    • Place a link at the front of the chassis                ║
+  ╚══════════════════════════════════════════════════════════════╝
+
+  WHY FIXED JOINTS FOR A CASTER?
+  ─────────────────────────────────
+  A real caster swivels and rolls.  Modelling that accurately
+  requires two extra joints (swivel + spin) which complicates the
+  TF tree and is rarely needed for basic navigation demos.
+  The simpler approach: make it a frictionless sphere with a fixed
+  joint.  Gazebo's physics engine lets it slide/rotate freely on
+  contact as long as friction coefficients are zero.
+
+  GEOMETRY:
+  ─────────
+  The caster sits at the FRONT of the chassis:
+    x = +0.125 m  (half chassis length 0.15 minus a small inset)
+    y =  0.0   m  (centred laterally)
+    z = -0.025 m  (same height as wheel axle)
+
+  The sphere radius = 0.02 m (smaller than the drive wheels so the
+  chassis stays level at the front).  Wait — that would tilt the robot!
+  We compensate:
+    wheel centre is 0.025 m below base_link centre
+    caster sphere must also put its centre at ground + 0.05 m
+    → sphere centre z relative to base_link = -0.025 m ✓
+    But the sphere radius is 0.02 m so its bottom is 0.03 m above
+    ground — 0.02 m too high!
+
+  SOLUTION: use a small vertical stem (caster bracket) to drop the
+  sphere down so it JUST touches the ground.
+    bracket_length = 0.03 m (cylinder, radius 0.005 m)
+    bracket_origin z = -0.025 m  (axle height below base_link)
+    sphere_origin  z = -0.015 m  below bracket end
+    Net sphere bottom: 0.075 − 0.025 − 0.03 − 0.02 = 0.00 m ✓
+-->
+
+<robot name="diff_drive_robot">
+
+  <material name="caster_silver">
+    <color rgba="0.7 0.7 0.7 1.0"/>
+  </material>
+
+
+  <!-- ══════════════════════════════════════════
+       CASTER BRACKET LINK  (vertical stem)
+       ══════════════════════════════════════════ -->
+
+  <link name="caster_bracket_link">
+
+    <visual>
+      <origin xyz="0.0 0.0 -0.015" rpy="0.0 0.0 0.0"/>
+      <!-- bracket hangs downward from the joint, so shift −z by half length -->
+      <geometry>
+        <cylinder radius="0.005" length="0.03"/>
+      </geometry>
+      <material name="caster_silver"/>
+    </visual>
+
+    <collision>
+      <origin xyz="0.0 0.0 -0.015" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.005" length="0.03"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <origin xyz="0.0 0.0 -0.015" rpy="0.0 0.0 0.0"/>
+      <mass value="0.02"/>
+      <inertia ixx="1.5e-6" ixy="0.0" ixz="0.0"
+               iyy="1.5e-6" iyz="0.0"
+               izz="2.5e-8"/>
+    </inertial>
+
+  </link>
+
+
+  <!-- ══════════════════════════════════════════
+       CASTER SPHERE LINK
+       ══════════════════════════════════════════ -->
+
+  <link name="caster_wheel_link">
+
+    <visual>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <sphere radius="0.02"/>
+      </geometry>
+      <material name="caster_silver"/>
+    </visual>
+
+    <collision>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <sphere radius="0.02"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <mass value="0.05"/>
+      <!-- Solid sphere: Ixx = Iyy = Izz = (2/5)*m*r² = 0.4*0.05*0.0004 -->
+      <inertia ixx="8e-6" ixy="0.0" ixz="0.0"
+               iyy="8e-6" iyz="0.0"
+               izz="8e-6"/>
+    </inertial>
+
+  </link>
+
+
+  <!-- ══════════════════════════════════════════
+       JOINT: base_link  →  caster_bracket_link
+       ══════════════════════════════════════════ -->
+
+  <joint name="caster_bracket_joint" type="fixed">
+    <parent link="base_link"/>
+    <child  link="caster_bracket_link"/>
+    <!--
+      Attach at the front face of the chassis, axle height:
+        x = +0.125  (front of chassis — half length 0.15 minus 0.025 inset)
+        y =  0.0
+        z = -0.025  (same as wheel axle height below base_link centre)
+    -->
+    <origin xyz="-0.125 0.0 -0.025" rpy="0.0 0.0 0.0"/>
+  </joint>
+
+
+  <!-- ══════════════════════════════════════════
+       JOINT: caster_bracket_link  →  caster_wheel_link
+       ══════════════════════════════════════════ -->
+
+  <joint name="caster_wheel_joint" type="fixed">
+    <parent link="caster_bracket_link"/>
+    <child  link="caster_wheel_link"/>
+    <!--
+      Sphere centre is at the bottom of the 0.03 m bracket:
+        z = −0.03 (full bracket length, since visual shifts by half)
+    -->
+    <origin xyz="0.0 0.0 -0.03" rpy="0.0 0.0 0.0"/>
+  </joint>
+
+
+  <!-- ══════════════════════════════════════════════════════
+       STUDENT TASK  ★
+       ══════════════════════════════════════════════════════
+       PLACEHOLDER A — Gazebo friction plugin for caster
+       ─────────────────────────────────────────────────────
+       For the caster to slide freely in Gazebo, you must
+       set its friction to zero inside a <gazebo> block.
+
+       Paste the following snippet below this comment:
+
+       <gazebo reference="caster_wheel_link">
+         <mu1>0.0</mu1>
+         <mu2>0.0</mu2>
+         <kp>1000000.0</kp>
+         <kd>100.0</kd>
+         <minDepth>0.001</minDepth>
+       </gazebo>
+
+       Q. What are mu1 and mu2?  How do they affect
+          the robot's ability to turn in Gazebo?
+       ══════════════════════════════════════════════════════ -->
+
+  <!-- ### PASTE PLACEHOLDER A HERE ### -->
+
+</robot>

@@ -1,0 +1,100 @@
+<?xml version="1.0"?>
+<!--
+  ╔══════════════════════════════════════════════════════════════╗
+  ║         WORKSHOP PART 1 — ROBOT CHASSIS                     ║
+  ║                                                              ║
+  ║  Learning objectives:                                        ║
+  ║    • Understand the <robot> root element                     ║
+  ║    • Define a base_link (every robot needs one!)             ║
+  ║    • Use <visual> and <collision> geometry                   ║
+  ║    • Set material colours using <material>                   ║
+  ╚══════════════════════════════════════════════════════════════╝
+
+  NOTES:
+  - The chassis is a simple box: 0.3 m long × 0.2 m wide × 0.05 m tall
+  - Origin is placed at the geometric centre of the box
+  - base_footprint (ground plane link) is separated from base_link
+    so that navigation / TF trees work correctly with ROS 2 Nav2
+-->
+
+<robot name="diff_drive_robot">
+
+  <!-- ══════════════════════════════════════════
+       MATERIALS  (define colours once, reuse everywhere)
+       ══════════════════════════════════════════ -->
+
+  <material name="chassis_grey">
+    <color rgba="0.3 0.3 0.3 1.0"/>
+  </material>
+
+  <material name="wheel_black">
+    <color rgba="0.1 0.1 0.1 1.0"/>
+  </material>
+
+  <material name="caster_silver">
+    <color rgba="0.7 0.7 0.7 1.0"/>
+  </material>
+
+
+  <!-- ══════════════════════════════════════════
+       BASE FOOTPRINT LINK
+       (virtual link at ground level — required by Nav2 / AMCL)
+       ══════════════════════════════════════════ -->
+
+  <link name="base_footprint"/>
+
+
+  <!-- ══════════════════════════════════════════
+       CHASSIS LINK  (base_link)
+       ══════════════════════════════════════════ -->
+
+  <link name="base_link">
+
+    <!-- Visual geometry — what you see in RViz / Gazebo -->
+    <visual>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.30 0.20 0.05"/>
+        <!-- size = length(x)  width(y)  height(z) -->
+      </geometry>
+      <material name="chassis_grey"/>
+    </visual>
+
+    <!-- Collision geometry — used by the physics engine -->
+    <collision>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.30 0.20 0.05"/>
+      </geometry>
+    </collision>
+
+    <!-- Inertial properties — required for Gazebo simulation -->
+    <inertial>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <mass value="2.0"/>                <!-- kg -->
+      <!-- Inertia tensor for a uniform box:
+           Ixx = (1/12)*m*(y²+z²)   Iyy = (1/12)*m*(x²+z²)   Izz = (1/12)*m*(x²+y²)
+           With m=2, x=0.30, y=0.20, z=0.05 -->
+      <inertia ixx="0.00708" ixy="0.0" ixz="0.0"
+               iyy="0.01542" iyz="0.0"
+               izz="0.02167"/>
+    </inertial>
+
+  </link>
+
+
+  <!-- ══════════════════════════════════════════
+       JOINT: base_footprint  →  base_link
+       ══════════════════════════════════════════ -->
+
+  <joint name="base_footprint_joint" type="fixed">
+    <parent link="base_footprint"/>
+    <child  link="base_link"/>
+    <!--
+      The chassis centre sits 0.075 m above the ground:
+        wheel radius (0.05 m) + half chassis height (0.025 m) = 0.075 m
+    -->
+    <origin xyz="0.0 0.0 0.075" rpy="0.0 0.0 0.0"/>
+  </joint>
+
+</robot>

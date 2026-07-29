@@ -1,0 +1,391 @@
+<?xml version="1.0"?>
+<!--
+  ╔══════════════════════════════════════════════════════════════════════╗
+  ║         WORKSHOP PART 4 — FULL ASSEMBLY                              ║
+  ║                                                                      ║
+  ║  Learning objectives:                                                ║
+  ║    • Combine all parts into one complete robot description           ║
+  ║    • Understand the full TF tree                                     ║
+  ║    • Add the ROS 2 diff_drive controller plugin for Gazebo           ║
+  ║    • Add the joint_state_broadcaster for RViz feedback               ║
+  ║    • Verify the model with check_urdf and RViz                       ║
+  ║                                                                      ║
+  ║  TF TREE:                                                            ║
+  ║    base_footprint                                                    ║
+  ║      └── base_link  (chassis)                                        ║
+  ║            ├── left_wheel_link                                       ║
+  ║            ├── right_wheel_link                                      ║
+  ║            └── caster_bracket_link                                   ║
+  ║                  └── caster_wheel_link                               ║
+  ╚══════════════════════════════════════════════════════════════════════╝
+
+  HOW TO VIEW IN RVIZ2:
+  ─────────────────────
+    ros2 launch /path/to/launch/workshop_rviz.launch.py urdf:=/path/to/04_robot_assembly.urdf.xml
+
+  HOW TO LAUNCH IN GAZEBO (Ignition Fortress):
+  ─────────────────────────────────────────────
+    ros2 launch /path/to/launch/gazebo.launch.py
+
+  VERIFY URDF SYNTAX:
+  ───────────────────
+    check_urdf robot.urdf.xml
+-->
+
+<robot name="diff_drive_robot"
+       xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+
+  <!-- ═══════════════════════════════════════════════════════
+       MATERIALS
+       ═══════════════════════════════════════════════════════ -->
+
+  <material name="chassis_grey">
+    <color rgba="0.3 0.3 0.3 1.0"/>
+  </material>
+
+  <material name="wheel_black">
+    <color rgba="0.1 0.1 0.1 1.0"/>
+  </material>
+
+  <material name="caster_silver">
+    <color rgba="0.7 0.7 0.7 1.0"/>
+  </material>
+
+
+  <!-- ═══════════════════════════════════════════════════════
+       1.  BASE FOOTPRINT
+       ═══════════════════════════════════════════════════════ -->
+
+  <link name="base_footprint"/>
+
+
+  <!-- ═══════════════════════════════════════════════════════
+       2.  CHASSIS  (base_link)
+       ═══════════════════════════════════════════════════════ -->
+
+  <link name="base_link">
+    <visual>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.30 0.20 0.05"/>
+      </geometry>
+      <material name="chassis_grey"/>
+    </visual>
+
+    <collision>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.30 0.20 0.05"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <mass value="2.0"/>
+      <inertia ixx="0.00708" ixy="0.0" ixz="0.0"
+               iyy="0.01542" iyz="0.0"
+               izz="0.02167"/>
+    </inertial>
+  </link>
+
+  <joint name="base_footprint_joint" type="fixed">
+    <parent link="base_footprint"/>
+    <child  link="base_link"/>
+    <origin xyz="0.0 0.0 0.075" rpy="0.0 0.0 0.0"/>
+  </joint>
+
+
+  <!-- ═══════════════════════════════════════════════════════
+       3.  LEFT WHEEL
+       ═══════════════════════════════════════════════════════ -->
+
+  <link name="left_wheel_link">
+    <visual>
+      <origin xyz="0.0 0.0 0.0" rpy="1.5708 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.05" length="0.025"/>
+      </geometry>
+      <material name="wheel_black"/>
+    </visual>
+    <collision>
+      <origin xyz="0.0 0.0 0.0" rpy="1.5708 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.05" length="0.025"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <mass value="0.3"/>
+      <inertia ixx="0.000244" ixy="0.0" ixz="0.0"
+               iyy="0.000375" iyz="0.0"
+               izz="0.000244"/>
+    </inertial>
+  </link>
+
+  <!--
+    ┌─────────────────────────────────────────────────────┐
+    │  STUDENT PLACEHOLDER 1 — LEFT WHEEL JOINT           │
+    │                                                     │
+    │  Define a continuous joint that connects base_link  │
+    │  to left_wheel_link.                                │
+    │                                                     │
+    │  Requirements:                                      │
+    │    • Joint name  : left_wheel_joint                 │
+    │    • Type        : continuous                       │
+    │    • Parent      : base_link                        │
+    │    • Child       : left_wheel_link                  │
+    │    • Origin      : xyz="0.0  0.1125  -0.025"        │
+    │                    rpy="0.0  0.0      0.0"          │
+    │    • Axis        : xyz="0.0  1.0      0.0"          │
+    │    • Dynamics    : damping="0.1" friction="0.1"     │
+    │                                                     │
+    │  Syntax reminder:                                   │
+    │    <joint name="..." type="continuous">             │
+    │      <parent link="..."/>                           │
+    │      <child  link="..."/>                           │
+    │      <origin xyz="..." rpy="..."/>                  │
+    │      <axis xyz="..."/>                              │
+    │      <dynamics damping="..." friction="..."/>       │
+    │    </joint>                                         │
+    └─────────────────────────────────────────────────────┘
+  -->
+
+  <!-- PASTE YOUR LEFT WHEEL JOINT HERE -->
+  <joint name="left_wheel_joint" type="continuous">
+  <parent link="base_link"/>
+  <child  link="left_wheel_link"/>
+  <origin xyz="0.0 0.1125 -0.025" rpy="0.0 0.0 0.0"/>
+  <axis xyz="0.0 1.0 0.0"/>
+  <dynamics damping="0.1" friction="0.1"/>
+</joint>
+
+
+  <!-- ═══════════════════════════════════════════════════════
+       4.  RIGHT WHEEL
+       ═══════════════════════════════════════════════════════ -->
+
+  <link name="right_wheel_link">
+    <visual>
+      <origin xyz="0.0 0.0 0.0" rpy="1.5708 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.05" length="0.025"/>
+      </geometry>
+      <material name="wheel_black"/>
+    </visual>
+    <collision>
+      <origin xyz="0.0 0.0 0.0" rpy="1.5708 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.05" length="0.025"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <mass value="0.3"/>
+      <inertia ixx="0.000244" ixy="0.0" ixz="0.0"
+               iyy="0.000375" iyz="0.0"
+               izz="0.000244"/>
+    </inertial>
+  </link>
+
+  <!--
+    ┌─────────────────────────────────────────────────────┐
+    │  STUDENT PLACEHOLDER 2 — RIGHT WHEEL JOINT          │
+    │                                                     │
+    │  Same as the left wheel joint but mirrored.         │
+    │  The only change is the Y offset: -0.1125           │
+    │                                                     │
+    │    • Joint name  : right_wheel_joint                │
+    │    • Origin      : xyz="0.0  -0.1125  -0.025"       │
+    │    (everything else identical to left wheel joint)  │
+    └─────────────────────────────────────────────────────┘
+  -->
+  
+  <!-- PASTE YOUR RIGHT WHEEL JOINT HERE -->
+  <joint name="right_wheel_joint" type="continuous">
+  <parent link="base_link"/>
+  <child  link="right_wheel_link"/>
+  <origin xyz="0.0 -0.1125 -0.025" rpy="0.0 0.0 0.0"/>
+  <axis xyz="0.0 1.0 0.0"/>
+  <dynamics damping="0.1" friction="0.1"/>
+</joint>
+
+
+  <!-- ═══════════════════════════════════════════════════════
+       5.  CASTER BRACKET
+       ═══════════════════════════════════════════════════════ -->
+
+  <link name="caster_bracket_link">
+    <visual>
+      <origin xyz="0.0 0.0 -0.015" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.005" length="0.01"/>
+      </geometry>
+      <material name="caster_silver"/>
+    </visual>
+    <collision>
+      <origin xyz="0.0 0.0 -0.015" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <cylinder radius="0.005" length="0.01"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0.0 0.0 -0.015" rpy="0.0 0.0 0.0"/>
+      <mass value="0.02"/>
+      <inertia ixx="1.5e-6" ixy="0.0" ixz="0.0"
+               iyy="1.5e-6" iyz="0.0"
+               izz="2.5e-8"/>
+    </inertial>
+  </link>
+
+  <joint name="caster_bracket_joint" type="fixed">
+    <parent link="base_link"/>
+    <child  link="caster_bracket_link"/>
+    <origin xyz="-0.125 0.0 -0.025" rpy="0.0 0.0 0.0"/>
+  </joint>
+
+
+  <!-- ═══════════════════════════════════════════════════════
+       6.  CASTER WHEEL SPHERE
+       ═══════════════════════════════════════════════════════ -->
+
+  <link name="caster_wheel_link">
+    <visual>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <sphere radius="0.02"/>
+      </geometry>
+      <material name="caster_silver"/>
+    </visual>
+    <collision>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <sphere radius="0.02"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <mass value="0.05"/>
+      <inertia ixx="8e-6" ixy="0.0" ixz="0.0"
+               iyy="8e-6" iyz="0.0"
+               izz="8e-6"/>
+    </inertial>
+  </link>
+
+  <joint name="caster_wheel_joint" type="fixed">
+    <parent link="caster_bracket_link"/>
+    <child  link="caster_wheel_link"/>
+    <origin xyz="0.0 0.0 -0.03" rpy="0.0 0.0 0.0"/>
+  </joint>
+
+
+  <!-- ═══════════════════════════════════════════════════════
+       7.  GAZEBO PROPERTIES
+       ═══════════════════════════════════════════════════════ -->
+
+  <!-- Chassis surface friction (normal tarmac-like surface) -->
+  <gazebo reference="base_link">
+    <mu1>0.6</mu1>
+    <mu2>0.6</mu2>
+    <material>Gazebo/DarkGrey</material>
+  </gazebo>
+
+  <!-- Drive wheel friction (high grip) -->
+  <gazebo reference="left_wheel_link">
+    <mu1>1.5</mu1>
+    <mu2>1.5</mu2>
+    <material>Gazebo/Black</material>
+  </gazebo>
+
+  <gazebo reference="right_wheel_link">
+    <mu1>1.5</mu1>
+    <mu2>1.5</mu2>
+    <material>Gazebo/Black</material>
+  </gazebo>
+
+  <!-- Caster — zero friction so it slides freely -->
+  <!--
+    ┌─────────────────────────────────────────────────────┐
+    │  STUDENT PLACEHOLDER 3 — CASTER GAZEBO FRICTION     │
+    │                                                     │
+    │  Add a <gazebo reference="caster_wheel_link"> block │
+    │  that sets mu1 and mu2 to 0.0 so the caster slides  │
+    │  freely without resisting turns.                    │
+    │                                                     │
+    │  Also add:   <kp>1000000.0</kp>                     │
+    │              <kd>100.0</kd>                         │
+    │              <minDepth>0.001</minDepth>             │
+    └─────────────────────────────────────────────────────┘
+  -->
+
+  <!-- ### PASTE CASTER FRICTION BLOCK HERE ### -->
+  <gazebo reference="caster_wheel_link">
+  <mu1>0.0</mu1>
+  <mu2>0.0</mu2>
+  <kp>1000000.0</kp>
+  <kd>100.0</kd>
+  <minDepth>0.001</minDepth>
+</gazebo>
+
+
+  <!-- ═══════════════════════════════════════════════════════
+       8.  ROS 2 GAZEBO PLUGINS
+       ═══════════════════════════════════════════════════════ -->
+
+  <!--
+    ┌─────────────────────────────────────────────────────────────┐
+    │  STUDENT PLACEHOLDER 4 — DIFFERENTIAL DRIVE PLUGIN         │
+    │                                                             │
+    │  This plugin makes the robot move when you publish to       │
+    │  /cmd_vel and broadcasts odometry on /odom.                 │
+    │                                                             │
+    │  Paste the following <gazebo> block here:                   │
+    │                                                             │
+    │  <gazebo>                                                   │
+    │    <plugin                                                  │
+    │        filename="ignition-gazebo-diff-drive-system"         │
+    │        name="ignition::gazebo::systems::DiffDrive">         │
+    │      <left_joint>left_wheel_joint</left_joint>              │
+    │      <right_joint>right_wheel_joint</right_joint>           │
+    │      <wheel_separation>0.225</wheel_separation>             │
+    │      <wheel_radius>0.05</wheel_radius>                      │
+    │      <topic>/cmd_vel</topic>                                │
+    │      <odom_topic>/odom</odom_topic>                         │
+    │      <frame_id>odom</frame_id>                              │
+    │      <child_frame_id>base_footprint</child_frame_id>        │
+    │      <odom_publish_frequency>50</odom_publish_frequency>    │
+    │    </plugin>                                                │
+    │  </gazebo>                                                  │
+    │                                                             │
+    │  KEY VALUES TO UNDERSTAND:                                  │
+    │    wheel_separation = distance between wheel centres        │
+    │                     = 2 × 0.1125 m = 0.225 m               │
+    │    wheel_radius     = wheel radius = 0.05 m                 │
+    └─────────────────────────────────────────────────────────────┘
+  -->
+
+  <!-- ### PASTE DIFF DRIVE PLUGIN HERE ### -->
+<gazebo>
+  <plugin
+      filename="ignition-gazebo-diff-drive-system"
+      name="ignition::gazebo::systems::DiffDrive">
+    <left_joint>left_wheel_joint</left_joint>
+    <right_joint>right_wheel_joint</right_joint>
+    <wheel_separation>0.225</wheel_separation>
+    <wheel_radius>0.05</wheel_radius>
+    <topic>/cmd_vel</topic>
+    <odom_topic>/odom</odom_topic>
+    <frame_id>odom</frame_id>
+    <child_frame_id>base_footprint</child_frame_id>
+    <odom_publish_frequency>50</odom_publish_frequency>
+  </plugin>
+</gazebo>
+
+  <!-- Joint state publisher plugin (broadcasts /joint_states via bridge) -->
+  <gazebo>
+    <plugin filename="ignition-gazebo-joint-state-publisher-system"
+            name="ignition::gazebo::systems::JointStatePublisher">
+    </plugin>
+  </gazebo>
+
+</robot>
